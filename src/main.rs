@@ -7,7 +7,7 @@ struct Weight(f64);
 struct Height(f64);
 
 #[derive(Debug)]
-struct BMI {
+struct Bmi {
     bmi: f64,
     conclusion: BMIConclusion,
 }
@@ -63,10 +63,10 @@ fn main() {
     );
 }
 
-fn calculate_bmi(height: Height, weight: Weight) -> BMI {
+fn calculate_bmi(height: Height, weight: Weight) -> Bmi {
     let bmi_number = weight.0 / height.0.powf(2f64);
 
-    BMI {
+    Bmi {
         bmi: bmi_number,
         conclusion: match bmi_number {
             number if number < 19.0 => BMIConclusion::Underweight,
@@ -82,9 +82,9 @@ fn calculate_bmi(height: Height, weight: Weight) -> BMI {
 mod test {
     use super::calculate_bmi;
     use super::BMIConclusion;
+    use super::Bmi;
     use super::Height;
     use super::Weight;
-    use super::BMI;
 
     #[test]
     fn test_division_by_zero() {
