@@ -2,13 +2,9 @@ use std::fmt::Debug;
 use std::io::Write;
 use std::str::FromStr;
 
-struct Weight {
-    weight: f64,
-}
+struct Weight(f64);
 
-struct Height {
-    height: f64,
-}
+struct Height(f64);
 
 #[derive(Debug)]
 struct BMI {
@@ -36,14 +32,12 @@ fn main() {
         .read_line(&mut buffer_weight)
         .unwrap_or_else(|err| panic!("Error while parsing: {}", err));
 
-    let weight = Weight {
-        weight: f64::from_str(buffer_weight.trim()).unwrap_or_else(|err| {
-            println!("Error while parsing: {}", err);
-            println!("Using standard values for a male");
-            85.2
-        }),
-    };
-    println!("Weight is {}", weight.weight);
+    let weight = Weight(f64::from_str(buffer_weight.trim()).unwrap_or_else(|err| {
+        println!("Error while parsing: {}", err);
+        println!("Using standard values for a male");
+        85.2
+    }));
+    println!("Weight is {}", weight.0);
 
     print!("Please input your height in meters: ");
 
@@ -54,14 +48,12 @@ fn main() {
         .read_line(&mut buffer_height)
         .unwrap_or_else(|err| panic!("Error while parsing: {}", err));
 
-    let height = Height {
-        height: f64::from_str(buffer_height.trim()).unwrap_or_else(|err| {
-            println!("Error while parsing: {}", err);
-            println!("Using standard values for a male");
-            1.8
-        }),
-    };
-    println!("Weight is {}", height.height);
+    let height = Height(f64::from_str(buffer_height.trim()).unwrap_or_else(|err| {
+        println!("Error while parsing: {}", err);
+        println!("Using standard values for a male");
+        1.8
+    }));
+    println!("Weight is {}", height.0);
 
     let bmi = calculate_bmi(height, weight);
 
@@ -72,7 +64,7 @@ fn main() {
 }
 
 fn calculate_bmi(height: Height, weight: Weight) -> BMI {
-    let bmi_number = weight.weight / height.height.powf(2f64);
+    let bmi_number = weight.0 / height.0.powf(2f64);
 
     BMI {
         bmi: bmi_number,
@@ -96,7 +88,7 @@ mod test {
 
     #[test]
     fn test_division_by_zero() {
-        let bmi = calculate_bmi(Height { height: 78.0 }, Weight { weight: 0.0 });
+        let bmi = calculate_bmi(Height(78.0), Weight(0.0));
 
         println!("{:?}", bmi)
     }
