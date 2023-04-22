@@ -61,7 +61,7 @@ fn main() {
 
     let bmi = calculate_bmi(height, weight);
 
-    println!("Your BMI is {} and your are {:?}", bmi.bmi, bmi.conclusion);
+    println!("Your BMI is {} and your are {:?}, congrats?", bmi.bmi, bmi.conclusion);
 
 
 }
