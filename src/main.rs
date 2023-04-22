@@ -10,6 +10,7 @@ struct Height {
     height: f64,
 }
 
+#[derive(Debug)]
 struct BMI {
     bmi: f64,
     conclusion: BMIConclusion,
@@ -86,4 +87,21 @@ fn calculate_bmi(height: Height, weight: Weight) -> BMI {
 }
 
 #[cfg(test)]
-mod test {}
+mod test {
+    use super::calculate_bmi;
+    use super::BMI;
+    use super::Weight;
+    use super::Height;
+    use super::BMIConclusion;
+
+    #[test]
+    fn test_division_by_zero() {
+        let bmi = calculate_bmi(Height {
+            height: 78.0
+        }, Weight {
+            weight: 0.0
+        });
+
+        println!("{:?}", bmi)
+    }
+}
