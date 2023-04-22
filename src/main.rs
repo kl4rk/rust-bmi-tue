@@ -89,18 +89,14 @@ fn calculate_bmi(height: Height, weight: Weight) -> BMI {
 #[cfg(test)]
 mod test {
     use super::calculate_bmi;
-    use super::BMI;
-    use super::Weight;
-    use super::Height;
     use super::BMIConclusion;
+    use super::Height;
+    use super::Weight;
+    use super::BMI;
 
     #[test]
     fn test_division_by_zero() {
-        let bmi = calculate_bmi(Height {
-            height: 78.0
-        }, Weight {
-            weight: 0.0
-        });
+        let bmi = calculate_bmi(Height { height: 78.0 }, Weight { weight: 0.0 });
 
         println!("{:?}", bmi)
     }
