@@ -38,7 +38,8 @@ fn main() {
 
     let weight = Weight{ weight: f64::from_str(&buffer_weight.trim()).unwrap_or_else(|err| {
         println!("Error while parsing: {}", err);
-        panic!()
+        println!("Using standard values for a male");
+        85.2
     })};
     println!("Weight is {}", weight.weight);
 
@@ -54,8 +55,8 @@ fn main() {
 
     let height = Height {height: f64::from_str(&buffer_height.trim()).unwrap_or_else(|err| {
         println!("Error while parsing: {}", err);
-        panic!()
-
+        println!("Using standard values for a male");
+        1.8
     })};
     println!("Weight is {}", height.height);
 
