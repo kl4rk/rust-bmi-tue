@@ -37,7 +37,7 @@ fn main() {
         .unwrap_or_else(|err| panic!("Error while parsing: {}", err));
 
     let weight = Weight {
-        weight: f64::from_str(&buffer_weight.trim()).unwrap_or_else(|err| {
+        weight: f64::from_str(buffer_weight.trim()).unwrap_or_else(|err| {
             println!("Error while parsing: {}", err);
             println!("Using standard values for a male");
             85.2
@@ -55,7 +55,7 @@ fn main() {
         .unwrap_or_else(|err| panic!("Error while parsing: {}", err));
 
     let height = Height {
-        height: f64::from_str(&buffer_height.trim()).unwrap_or_else(|err| {
+        height: f64::from_str(buffer_height.trim()).unwrap_or_else(|err| {
             println!("Error while parsing: {}", err);
             println!("Using standard values for a male");
             1.8
@@ -78,9 +78,9 @@ fn calculate_bmi(height: Height, weight: Weight) -> BMI {
         bmi: bmi_number,
         conclusion: match bmi_number {
             number if number < 19.0 => BMIConclusion::Underweight,
-            number if number >= 19.0 && number < 25.0 => BMIConclusion::Normal,
-            number if number >= 25.0 && number < 30.0 => BMIConclusion::Overweight,
-            number if number >= 30.0 && number < 35.0 => BMIConclusion::Obese,
+            number if (19.0..25.0).contains(&number) => BMIConclusion::Normal,
+            number if (25.0..30.0).contains(&number) => BMIConclusion::Overweight,
+            number if (30.0..35.0).contains(&number) => BMIConclusion::Obese,
             _ => BMIConclusion::MorbidObese,
         },
     }
