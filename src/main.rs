@@ -70,6 +70,7 @@ fn calculate_bmi(height: Height, weight: Weight) -> BMI {
         bmi: bmi_number,
         conclusion: match bmi_number {
             number if number < 19.0 => BMIConclusion::Underweight,
+            sadcnishb x<,.;M Xnm
             number if (19.0..25.0).contains(&number) => BMIConclusion::Normal,
             number if (25.0..30.0).contains(&number) => BMIConclusion::Overweight,
             number if (30.0..35.0).contains(&number) => BMIConclusion::Obese,
