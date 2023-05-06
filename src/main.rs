@@ -21,6 +21,12 @@ enum BMIConclusion {
     MorbidObese,
 }
 
+#[derive(Debug, PartialEq)]
+enum BmiError {
+    HeightCannotBeZeroOrNegative,
+    WeightCannotBeZeroOrNegative,
+}
+
 fn main() {
     let stdin = std::io::stdin();
     print!("Please input your weight in kg: ");
@@ -57,39 +63,51 @@ fn main() {
 
     let bmi = calculate_bmi(height, weight);
 
-    println!(
-        "Your BMI is {} and your are {:?}, congrats?",
-        bmi.bmi, bmi.conclusion
-    );
+    match bmi {
+        Ok(bmi) => println!(
+            "Your BMI is {} and your are {:?}, congrats?",
+            bmi.bmi, bmi.conclusion
+        ),
+        Err(e) => println!("Error while calculating: {e:?}"),
+    }
 }
 
-fn calculate_bmi(height: Height, weight: Weight) -> Bmi {
-    let bmi_number = weight.0 / height.0.powf(2f64);
+fn calculate_bmi(height: Height, weight: Weight) -> Result<Bmi, BmiError> {
+    if height.0 <= 0.0 {
+        Err(BmiError::HeightCannotBeZeroOrNegative)
+    } else if weight.0 <= 0.0 {
+        Err(BmiError::WeightCannotBeZeroOrNegative)
+    } else {
+        let bmi_number = weight.0 / height.0.powf(2f64);
 
-    Bmi {
-        bmi: bmi_number,
-        conclusion: match bmi_number {
-            number if number < 19.0 => BMIConclusion::Underweight,
-            number if (19.0..25.0).contains(&number) => BMIConclusion::Normal,
-            number if (25.0..30.0).contains(&number) => BMIConclusion::Overweight,
-            number if (30.0..35.0).contains(&number) => BMIConclusion::Obese,
-            _ => BMIConclusion::MorbidObese,
-        },
+        Ok(Bmi {
+            bmi: bmi_number,
+            conclusion: match bmi_number {
+                number if number < 19.0 => BMIConclusion::Underweight,
+                number if (19.0..25.0).contains(&number) => BMIConclusion::Normal,
+                number if (25.0..30.0).contains(&number) => BMIConclusion::Overweight,
+                number if (30.0..35.0).contains(&number) => BMIConclusion::Obese,
+                _ => BMIConclusion::MorbidObese,
+            },
+        })
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::calculate_bmi;
-    use super::BMIConclusion;
-    use super::Bmi;
+    use super::BmiError;
     use super::Height;
     use super::Weight;
 
     #[test]
-    fn test_division_by_zero() {
-        let bmi = calculate_bmi(Height(78.0), Weight(0.0));
-
-        println!("{:?}", bmi)
+    fn test_height_zero_err() {
+        let bmi_err = calculate_bmi(Height(0.0), Weight(78.0)).unwrap_err();
+        assert_eq!(bmi_err, BmiError::HeightCannotBeZeroOrNegative);
+    }
+    #[test]
+    fn test_weight_zeros_err() {
+        let bmi_err = calculate_bmi(Height(1.0), Weight(0.0)).unwrap_err();
+        assert_eq!(bmi_err, BmiError::WeightCannotBeZeroOrNegative);
     }
 }
