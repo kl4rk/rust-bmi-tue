@@ -2,12 +2,14 @@ use std::fmt::Debug;
 use std::io::Write;
 use std::str::FromStr;
 
-struct Weight(f64);
+mod tests;
 
-struct Height(f64);
+pub struct Weight(f64);
+
+pub struct Height(f64);
 
 #[derive(Debug)]
-struct Bmi {
+pub struct Bmi {
     bmi: f64,
     conclusion: BMIConclusion,
 }
@@ -22,7 +24,7 @@ enum BMIConclusion {
 }
 
 #[derive(Debug, PartialEq)]
-enum BmiError {
+pub enum BmiError {
     HeightCannotBeZeroOrNegative,
     WeightCannotBeZeroOrNegative,
 }
@@ -72,7 +74,7 @@ fn main() {
     }
 }
 
-fn calculate_bmi(height: Height, weight: Weight) -> Result<Bmi, BmiError> {
+pub fn calculate_bmi(height: Height, weight: Weight) -> Result<Bmi, BmiError> {
     if height.0 <= 0.0 {
         Err(BmiError::HeightCannotBeZeroOrNegative)
     } else if weight.0 <= 0.0 {
@@ -90,24 +92,5 @@ fn calculate_bmi(height: Height, weight: Weight) -> Result<Bmi, BmiError> {
                 _ => BMIConclusion::MorbidObese,
             },
         })
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::calculate_bmi;
-    use super::BmiError;
-    use super::Height;
-    use super::Weight;
-
-    #[test]
-    fn test_height_zero_err() {
-        let bmi_err = calculate_bmi(Height(0.0), Weight(78.0)).unwrap_err();
-        assert_eq!(bmi_err, BmiError::HeightCannotBeZeroOrNegative);
-    }
-    #[test]
-    fn test_weight_zero_err() {
-        let bmi_err = calculate_bmi(Height(1.0), Weight(0.0)).unwrap_err();
-        assert_eq!(bmi_err, BmiError::WeightCannotBeZeroOrNegative);
     }
 }
