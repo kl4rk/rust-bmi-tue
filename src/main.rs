@@ -1,6 +1,7 @@
 use std::fmt::Debug;
-use std::io::Write;
-use std::str::FromStr;
+
+use inquire::validator::Validation;
+use inquire::CustomType;
 
 mod tests;
 
@@ -30,39 +31,46 @@ pub enum BmiError {
 }
 
 fn main() {
-    let stdin = std::io::stdin();
-    print!("Please input your weight in kg: ");
-
-    let _ = std::io::stdout().flush();
-
-    let mut buffer_weight = String::new();
-    stdin
-        .read_line(&mut buffer_weight)
-        .unwrap_or_else(|err| panic!("Error while parsing: {}", err));
-
-    let weight = Weight(f64::from_str(buffer_weight.trim()).unwrap_or_else(|err| {
-        println!("Error while parsing: {}", err);
-        println!("Using standard values for a male");
-        85.2
-    }));
-    println!("Weight is {}", weight.0);
-
-    print!("Please input your height in meters: ");
-
-    let _ = std::io::stdout().flush();
-
-    let mut buffer_height = String::new();
-    stdin
-        .read_line(&mut buffer_height)
-        .unwrap_or_else(|err| panic!("Error while parsing: {}", err));
-
-    let height = Height(f64::from_str(buffer_height.trim()).unwrap_or_else(|err| {
-        println!("Error while parsing: {}", err);
-        println!("Using standard values for a male");
-        1.8
-    }));
-    println!("Weight is {}", height.0);
-
+    let weight = Weight(
+        CustomType::<f64>::new("Please input your weight in kg: ")
+            .with_formatter(&|i| format!("{:}kg", i))
+            .with_error_message("Please type a valid number")
+            .with_validator(|val: &f64| {
+                if *val <= 0.0f64 {
+                    Ok(Validation::Invalid(
+                        "You should weigh a positive number".into(),
+                    ))
+                } else {
+                    Ok(Validation::Valid)
+                }
+            })
+            .prompt()
+            .unwrap_or_else(|err| {
+                println!("Error while parsing: {}", err);
+                println!("Using standard values for a male");
+                85.2
+            }),
+    );
+    let height = Height(
+        CustomType::<f64>::new("Please input your height in kg: ")
+            .with_formatter(&|i| format!("{:}m", i))
+            .with_error_message("Please type a valid number")
+            .with_validator(|val: &f64| {
+                if *val <= 0.0f64 {
+                    Ok(Validation::Invalid(
+                        "You should be a positive number high".into(),
+                    ))
+                } else {
+                    Ok(Validation::Valid)
+                }
+            })
+            .prompt()
+            .unwrap_or_else(|err| {
+                println!("Error while parsing: {}", err);
+                println!("Using standard values for a male");
+                1.8
+            }),
+    );
     let bmi = calculate_bmi(height, weight);
 
     match bmi {
