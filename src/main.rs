@@ -1,7 +1,10 @@
 use std::fmt::Debug;
+use std::io::Write;
 
 use inquire::validator::Validation;
 use inquire::CustomType;
+
+use serde::{Deserialize, Serialize};
 
 mod tests;
 
@@ -28,6 +31,13 @@ enum BMIConclusion {
 pub enum BmiError {
     HeightCannotBeZeroOrNegative,
     WeightCannotBeZeroOrNegative,
+}
+
+#[derive(Serialize, Deserialize)]
+struct HistData {
+    weight: f64,
+    height: f64,
+    bmi: f64,
 }
 
 fn main() {
@@ -71,18 +81,36 @@ fn main() {
                 1.8
             }),
     );
-    let bmi = calculate_bmi(height, weight);
+    let bmi = calculate_bmi(&height, &weight);
 
     match bmi {
-        Ok(bmi) => println!(
-            "Your BMI is {} and your are {:?}, congrats?",
-            bmi.bmi, bmi.conclusion
-        ),
+        Ok(bmi) => {
+            println!(
+                "Your BMI is {} and your are {:?}, congrats?",
+                bmi.bmi, bmi.conclusion
+            );
+            let data = HistData{
+                weight: weight.0,
+                height: height.0,
+                bmi: bmi.bmi
+            };
+            let mut output = serde_json::to_string(&data).unwrap_or_else(|err| {
+                panic!("Serialization error {:?}", err);
+            });
+            output += "\n";
+            let mut file = std::fs::File::options()
+                .create(true)
+                .append(true)
+                .open("bmis.json")
+                .unwrap_or_else(|err| panic!("Could not read file, err: {:?}", err));
+            file.write_all(output.as_bytes())
+                .unwrap_or_else(|err| panic!("Could not read file, err: {:?}", err));
+        }
         Err(e) => println!("Error while calculating: {e:?}"),
     }
 }
 
-pub fn calculate_bmi(height: Height, weight: Weight) -> Result<Bmi, BmiError> {
+pub fn calculate_bmi(height: &Height, weight: &Weight) -> Result<Bmi, BmiError> {
     if height.0 <= 0.0 {
         Err(BmiError::HeightCannotBeZeroOrNegative)
     } else if weight.0 <= 0.0 {

@@ -1,0 +1,2 @@
+Calculated BMI was:	5
+Calculated BMI was:	0.3055555555555556
