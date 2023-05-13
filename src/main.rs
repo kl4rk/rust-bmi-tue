@@ -120,7 +120,6 @@ fn main() {
                     bmi: bmi.bmi,
                 };
                 let mut database = read_database();
-                print!("database {:?}", database);
                 database.push(data);
                 store_database(database)
             }
