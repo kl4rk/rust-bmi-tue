@@ -1,5 +1,5 @@
-use std::fmt::Debug;
-use std::io::Write;
+use std::fmt::{self, Debug, Display};
+use std::io::{Read, Write};
 
 use inquire::validator::Validation;
 use inquire::CustomType;
@@ -7,6 +7,14 @@ use inquire::CustomType;
 use serde::{Deserialize, Serialize};
 
 mod tests;
+
+use clap::Parser;
+
+#[derive(Parser)]
+struct Cli {
+    #[arg(short, long)]
+    recap: bool,
+}
 
 pub struct Weight(f64);
 
@@ -33,80 +41,91 @@ pub enum BmiError {
     WeightCannotBeZeroOrNegative,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct HistData {
     weight: f64,
     height: f64,
     bmi: f64,
 }
 
-fn main() {
-    let weight = Weight(
-        CustomType::<f64>::new("Please input your weight in kg: ")
-            .with_formatter(&|i| format!("{:}kg", i))
-            .with_error_message("Please type a valid number")
-            .with_validator(|val: &f64| {
-                if *val <= 0.0f64 {
-                    Ok(Validation::Invalid(
-                        "You should weigh a positive number".into(),
-                    ))
-                } else {
-                    Ok(Validation::Valid)
-                }
-            })
-            .prompt()
-            .unwrap_or_else(|err| {
-                println!("Error while parsing: {}", err);
-                println!("Using standard values for a male");
-                85.2
-            }),
-    );
-    let height = Height(
-        CustomType::<f64>::new("Please input your height in kg: ")
-            .with_formatter(&|i| format!("{:}m", i))
-            .with_error_message("Please type a valid number")
-            .with_validator(|val: &f64| {
-                if *val <= 0.0f64 {
-                    Ok(Validation::Invalid(
-                        "You should be a positive number high".into(),
-                    ))
-                } else {
-                    Ok(Validation::Valid)
-                }
-            })
-            .prompt()
-            .unwrap_or_else(|err| {
-                println!("Error while parsing: {}", err);
-                println!("Using standard values for a male");
-                1.8
-            }),
-    );
-    let bmi = calculate_bmi(&height, &weight);
+impl Display for HistData {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Height was: {}, Weight was: {}, BMI was: {}",
+            self.height, self.weight, self.bmi
+        )
+    }
+}
 
-    match bmi {
-        Ok(bmi) => {
-            println!(
-                "Your BMI is {} and your are {:?}, congrats?",
-                bmi.bmi, bmi.conclusion
-            );
-            let data = HistData{
-                weight: weight.0,
-                height: height.0,
-                bmi: bmi.bmi
-            };
-            let mut output = serde_json::to_string(&data).unwrap_or_else(|err| {
-                panic!("Serialization error {:?}", err);
-            });
-            output += "\n";
-            let mut file = std::fs::File::options()
-                .create(true)
-                .append(true)
-                .open("bmis.json")
-                .unwrap_or_else(|err| panic!("Could not read file, err: {:?}", err));
-            file.write_all(output.as_bytes())
-                .unwrap_or_else(|err| panic!("Could not read file, err: {:?}", err));
+fn main() {
+    let cli = Cli::parse();
+    if cli.recap {
+        let database = read_database();
+        for dataset in database {
+            println!("{dataset}")
         }
-        Err(e) => println!("Error while calculating: {e:?}"),
+    } else {
+        let weight = Weight(
+            CustomType::<f64>::new("Please input your weight in kg: ")
+                .with_formatter(&|i| format!("{:}kg", i))
+                .with_error_message("Please type a valid number")
+                .with_validator(|val: &f64| {
+                    if *val <= 0.0f64 {
+                        Ok(Validation::Invalid(
+                            "You should weigh a positive number".into(),
+                        ))
+                    } else {
+                        Ok(Validation::Valid)
+                    }
+                })
+                .prompt()
+                .unwrap_or_else(|err| {
+                    println!("Error while parsing: {}", err);
+                    println!("Using standard values for a male");
+                    85.2
+                }),
+        );
+        let height = Height(
+            CustomType::<f64>::new("Please input your height in kg: ")
+                .with_formatter(&|i| format!("{:}m", i))
+                .with_error_message("Please type a valid number")
+                .with_validator(|val: &f64| {
+                    if *val <= 0.0f64 {
+                        Ok(Validation::Invalid(
+                            "You should be a positive number high".into(),
+                        ))
+                    } else {
+                        Ok(Validation::Valid)
+                    }
+                })
+                .prompt()
+                .unwrap_or_else(|err| {
+                    println!("Error while parsing: {}", err);
+                    println!("Using standard values for a male");
+                    1.8
+                }),
+        );
+        let bmi = calculate_bmi(&height, &weight);
+
+        match bmi {
+            Ok(bmi) => {
+                println!(
+                    "Your BMI is {} and your are {:?}, congrats?",
+                    bmi.bmi, bmi.conclusion
+                );
+                let data = HistData {
+                    weight: weight.0,
+                    height: height.0,
+                    bmi: bmi.bmi,
+                };
+                let mut database = read_database();
+                print!("database {:?}", database);
+                database.push(data);
+                store_database(database)
+            }
+            Err(e) => println!("Error while calculating: {e:?}"),
+        }
     }
 }
 
@@ -129,4 +148,31 @@ pub fn calculate_bmi(height: &Height, weight: &Weight) -> Result<Bmi, BmiError> 
             },
         })
     }
+}
+
+fn read_database() -> Vec<HistData> {
+    let mut file = std::fs::File::options()
+        .create(true)
+        .append(true)
+        .read(true)
+        .open("bmis.json")
+        .unwrap_or_else(|err| panic!("Could not read file, err: {:?}", err));
+    let mut buffer = String::new();
+    file.read_to_string(&mut buffer)
+        .unwrap_or_else(|err| panic!("Error while reading file, err {:?}", err));
+    let data: Vec<HistData> = serde_json::from_str(&buffer)
+        .unwrap_or_else(|err| panic!("Could not deserialize database, err: {:?}", err));
+    data
+}
+
+fn store_database(data: Vec<HistData>) {
+    let mut file = std::fs::File::options()
+        .write(true)
+        .open("bmis.json")
+        .unwrap_or_else(|err| panic!("Could not open file, err: {:?}", err));
+    let output = serde_json::to_string(&data).unwrap_or_else(|err| {
+        panic!("Serialization error {:?}", err);
+    });
+    file.write_all(output.as_bytes())
+        .unwrap_or_else(|err| panic!("Error while writing file, err {:?}", err));
 }
